@@ -1,8 +1,14 @@
 # Agentic Restaurant RAG
 
-Agentic Restaurant RAG is a deployable client-server application, presented in
-the UI as Connoisseur Companion, with independently runnable retrieval,
-orchestration API, and web-client services.
+Agentic Restaurant RAG is an expanded implementation of IBM's
+[RAG and Agentic AI Capstone Project](https://www.coursera.org/learn/rag-and-agentic-ai-capstone-project?specialization=ibm-rag-and-agentic-ai).
+It updates the original collection of isolated study materials and lab
+exercises into a cohesive, deployable client-server application.
+
+Presented in the UI as Connoisseur Companion, the application separates its
+MCP retrieval server, orchestration API, and web client into independently
+runnable services. It also replaces illustrative multi-agent patterns with
+genuine **LangGraph** and **Agno** orchestration implementations.
 
 The application provides two real orchestration implementations over the same
 MCP retrieval service:
