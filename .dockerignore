@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+.env.*
+.venv
+venv
+__pycache__
+**/__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.data
+htmlcov
+*.ipynb
+*.zip

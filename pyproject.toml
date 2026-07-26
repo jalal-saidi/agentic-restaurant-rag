@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentic-restaurant-rag"
+version = "0.1.0"
+description = "Deployable MCP retrieval with LangGraph and Agno orchestration backends"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "agno[os,mcp,openai]==2.8.2",
+    "chromadb==1.5.9",
+    "fastapi==0.139.2",
+    "fastmcp==3.4.4",
+    "gradio==6.20.0",
+    "httpx>=0.28.1,<1",
+    "langgraph==1.2.9",
+    "mcp==1.28.1",
+    "numpy==2.2.6",
+    "pydantic>=2.12,<3",
+    "python-dotenv==1.2.2",
+    "uvicorn[standard]>=0.35,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.15,<2",
+    "pytest>=8.3,<10",
+    "pytest-asyncio>=0.25,<2",
+    "ruff>=0.11,<1",
+]
+
+[project.scripts]
+connoisseur-mcp = "connoisseur.mcp.server:main"
+connoisseur-api = "connoisseur.api.__main__:main"
+connoisseur-web = "connoisseur.client.gradio_app:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/connoisseur"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["connoisseur"]
+strict = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["gradio", "gradio.*", "numpy", "numpy.*"]
+follow_imports = "skip"
