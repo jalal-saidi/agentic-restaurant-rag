@@ -87,6 +87,7 @@ class AgnoRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 llm_model="model",
                 openai_base_url="http://model.test/v1",
                 mcp_server_url="http://mcp:8001/mcp",
+                llm_reasoning_effort="none",
             ),
             components=components,
         )
@@ -141,5 +142,9 @@ class AgnoRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             FakeModel.instances[0].kwargs["max_completion_tokens"],
             1_200,
+        )
+        self.assertEqual(
+            FakeModel.instances[0].kwargs["reasoning_effort"],
+            "none",
         )
         self.assertNotIn("temperature", FakeModel.instances[0].kwargs)

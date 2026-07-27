@@ -16,6 +16,7 @@ class AppSettingsTests(unittest.TestCase):
                 "API_BASE_URL": "http://api:8000/",
                 "RETRIEVAL_TOP_K": "7",
                 "LLM_MAX_TOKENS_PARAMETER": "max_tokens",
+                "LLM_REASONING_EFFORT": "none",
                 "CLIENT_TIMEOUT_SECONDS": "420",
             }
         )
@@ -26,6 +27,7 @@ class AppSettingsTests(unittest.TestCase):
         self.assertEqual(settings.api_base_url, "http://api:8000")
         self.assertEqual(settings.retrieval_limit, 7)
         self.assertEqual(settings.llm_max_tokens_parameter, "max_tokens")
+        self.assertEqual(settings.llm_reasoning_effort, "none")
         self.assertEqual(settings.client_timeout_seconds, 420)
         self.assertIsNone(settings.model_configuration_error())
 
@@ -75,3 +77,7 @@ class AppSettingsTests(unittest.TestCase):
     def test_rejects_unknown_max_tokens_parameter(self) -> None:
         with self.assertRaises(ValueError):
             AppSettings.from_env({"LLM_MAX_TOKENS_PARAMETER": "unknown"})
+
+    def test_rejects_unknown_reasoning_effort(self) -> None:
+        with self.assertRaises(ValueError):
+            AppSettings.from_env({"LLM_REASONING_EFFORT": "extreme"})

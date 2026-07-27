@@ -58,6 +58,10 @@ class OpenAICompatibleLLM(LanguageModel):
             }
             if self.settings.llm_temperature is not None:
                 request["temperature"] = self.settings.llm_temperature
+            if self.settings.llm_reasoning_effort is not None:
+                request["reasoning_effort"] = (
+                    self.settings.llm_reasoning_effort
+                )
             response = await client.chat.completions.create(**request)
             content = response.choices[0].message.content
             text = content_to_text(content)

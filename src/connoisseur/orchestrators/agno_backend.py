@@ -92,6 +92,8 @@ class AgnoRuntime:
         }
         if self.settings.llm_temperature is not None:
             kwargs["temperature"] = self.settings.llm_temperature
+        if self.settings.llm_reasoning_effort is not None:
+            kwargs["reasoning_effort"] = self.settings.llm_reasoning_effort
         if self.settings.openai_base_url:
             kwargs["base_url"] = self.settings.openai_base_url
         return self.components.model_cls(**kwargs)

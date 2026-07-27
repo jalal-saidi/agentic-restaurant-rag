@@ -94,6 +94,7 @@ class AppSettings:
     llm_max_tokens: int = 1_200
     llm_max_tokens_parameter: str = "max_completion_tokens"
     llm_temperature: float | None = None
+    llm_reasoning_effort: str | None = None
     request_timeout_seconds: float = 90.0
     client_timeout_seconds: float = 300.0
 
@@ -116,6 +117,23 @@ class AppSettings:
             raise ValueError(
                 "LLM_MAX_TOKENS_PARAMETER must be max_completion_tokens "
                 "or max_tokens"
+            )
+        reasoning_effort = (
+            values.get("LLM_REASONING_EFFORT", "").strip().lower() or None
+        )
+        if reasoning_effort not in {
+            None,
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+        }:
+            raise ValueError(
+                "LLM_REASONING_EFFORT must be none, minimal, low, medium, "
+                "high, xhigh, max, or blank"
             )
         return cls(
             llm_model=values.get("LLM_MODEL", "").strip(),
@@ -161,6 +179,7 @@ class AppSettings:
                 "LLM_TEMPERATURE",
                 minimum=0.0,
             ),
+            llm_reasoning_effort=reasoning_effort,
             request_timeout_seconds=_floating(
                 values,
                 "REQUEST_TIMEOUT_SECONDS",

@@ -57,6 +57,7 @@ class OpenAICompatibleLLMTests(unittest.IsolatedAsyncioTestCase):
                 llm_model="model",
                 openai_api_key="test-only",
                 llm_temperature=0.1,
+                llm_reasoning_effort="none",
             ),
             client=client,
         )
@@ -64,6 +65,10 @@ class OpenAICompatibleLLMTests(unittest.IsolatedAsyncioTestCase):
         await llm.complete(system="system", prompt="prompt")
 
         self.assertEqual(client.chat.completions.kwargs["temperature"], 0.1)
+        self.assertEqual(
+            client.chat.completions.kwargs["reasoning_effort"],
+            "none",
+        )
         self.assertIn(
             "max_completion_tokens",
             client.chat.completions.kwargs,

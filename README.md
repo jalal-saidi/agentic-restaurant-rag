@@ -73,7 +73,9 @@ not the host.
 For Ollama, also set `LLM_MAX_TOKENS_PARAMETER=max_tokens`. The default
 `max_completion_tokens` matches current OpenAI models. `LLM_TEMPERATURE` is
 optional and omitted when blank so reasoning models that reject it remain
-usable.
+usable. When using GPT-5.6 with function tools through Chat Completions, set
+`LLM_REASONING_EFFORT=none`; leave it blank for providers that do not support
+the parameter.
 
 Then start all three services:
 
@@ -199,6 +201,7 @@ docker run --rm agentic-restaurant-rag:test
 | `LLM_MAX_TOKENS_PARAMETER` | `max_completion_tokens` (current OpenAI) or `max_tokens` (many local APIs) |
 | `LLM_MAX_TOKENS` | Maximum output tokens for each model call |
 | `LLM_TEMPERATURE` | Optional sampling temperature; blank omits the field |
+| `LLM_REASONING_EFFORT` | Optional reasoning level; use `none` for GPT-5.6 function tools through Chat Completions |
 | `MCP_SERVER_URL` | Streamable HTTP MCP endpoint used by orchestrators |
 | `DATA_ROOT` | Root containing the `data` corpus directory |
 | `CHROMA_PATH` | Persistent vector-index directory |
