@@ -119,11 +119,21 @@ Then start all three services:
 docker compose up --build
 ```
 
-Open:
+Compose keeps the services on their standard ports inside the container
+network and publishes them on a dedicated, currently non-conflicting host-port
+range:
 
-- Gradio client: <http://localhost:7860>
-- FastAPI documentation: <http://localhost:8000/docs>
-- MCP endpoint: <http://localhost:8001/mcp>
+| Service | Host address | Container port |
+|---|---|---:|
+| Gradio client | <http://localhost:17860> | `7860` |
+| FastAPI documentation | <http://localhost:18000/docs> | `8000` |
+| MCP endpoint | <http://localhost:18001/mcp> | `8001` |
+
+The host ports are controlled by `WEB_PUBLISHED_PORT`,
+`API_PUBLISHED_PORT`, and `MCP_PUBLISHED_PORT` in `.env`. Change only those
+variables if a port becomes occupied; internal service URLs and health checks
+do not need to change. To see the effective mappings before startup, run
+`docker compose config`.
 
 Choose either `langgraph` or `agno` in the client before sending a request.
 
@@ -206,7 +216,8 @@ reload-enabled FastAPI, and Gradio services as Compose sidecars.
 
 1. Create `.env` from `.env.example` and configure the model.
 2. Stop the normal Compose stack if it is running because both environments
-   publish ports 7860, 8000, and 8001:
+   use the same configurable host ports (`17860`, `18000`, and `18001` by
+   default):
 
    ```powershell
    docker compose down

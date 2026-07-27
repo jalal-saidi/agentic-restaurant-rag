@@ -14,7 +14,7 @@ services:
     init: true
     restart: unless-stopped
     ports:
-      - "${MCP_PUBLISHED_PORT:-8001}:8001"
+      - "${MCP_PUBLISHED_PORT:-18001}:8001"
     volumes:
       - chroma_data:/app/.data/chroma
       - chroma_model_cache:/app/.cache/chroma
@@ -61,7 +61,7 @@ services:
     init: true
     restart: unless-stopped
     ports:
-      - "${API_PUBLISHED_PORT:-8000}:8000"
+      - "${API_PUBLISHED_PORT:-18000}:8000"
     depends_on:
       mcp:
         condition: service_healthy
@@ -93,7 +93,7 @@ services:
     init: true
     restart: unless-stopped
     ports:
-      - "${WEB_PUBLISHED_PORT:-7860}:7860"
+      - "${WEB_PUBLISHED_PORT:-17860}:7860"
     depends_on:
       api:
         condition: service_healthy

@@ -15,14 +15,19 @@ The recommended environment is the checked-in development container:
 The development Compose project starts four containers:
 
 - `dev` — the editor, shell, editable package, and test tools;
-- `mcp` — the FastMCP retrieval service on port 8001;
-- `api` — reload-enabled FastAPI on port 8000;
-- `web` — Gradio on port 7860.
+- `mcp` — the FastMCP retrieval service on container port 8001, published on
+  host port 18001 by default;
+- `api` — reload-enabled FastAPI on container port 8000, published on host
+  port 18000 by default;
+- `web` — Gradio on container port 7860, published on host port 17860 by
+  default.
 
 The source tree is bind-mounted into every service. FastAPI reloads Python
 changes automatically. Restart the MCP or web sidecar after changing code
 executed by those processes. Rebuild the container after dependency or
-development-image changes.
+development-image changes. Override `MCP_PUBLISHED_PORT`,
+`API_PUBLISHED_PORT`, or `WEB_PUBLISHED_PORT` in `.env` when a host port is
+already occupied; container-to-container addresses remain unchanged.
 
 Python 3.11 or 3.12 local environments remain supported:
 
