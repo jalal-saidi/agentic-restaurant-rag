@@ -13,8 +13,9 @@ genuine **LangGraph** and **Agno** orchestration implementations.
 The application provides two real orchestration implementations over the same
 MCP retrieval service:
 
-- **LangGraph** — an explicit state graph with retrieval, parallel specialist
-  analysis, and fan-in synthesis.
+- **LangGraph** — an explicit state graph that discovers MCP tools, lets the
+  model select and call relevant tools, runs parallel specialist analysis, and
+  performs fan-in synthesis.
 - **Agno** — a coordinate-mode Agno team whose leader delegates among five
   specialized agents, including an MCP-connected retrieval agent.
 
@@ -30,7 +31,7 @@ flowchart LR
     A --> R{Backend}
     R --> L[LangGraph StateGraph]
     R --> G[Agno coordinate Team]
-    L --> C[MCP client]
+    L --> C[Dynamic MCP tool client]
     G --> C
     C --> M[FastMCP retrieval server :8001]
     M --> V[(Chroma vector index)]
@@ -42,18 +43,19 @@ directly. Data access and retrieval are independently deployable and can later
 be replaced with a managed vector database without changing the client API.
 
 The two backends intentionally demonstrate different orchestration semantics.
-LangGraph executes a fixed, inspectable topology and waits for every specialist
-branch before synthesis. Agno uses its native coordinate `Team`: a leader
-selects agents, delegates work, and synthesizes their responses dynamically.
-Both are real framework execution paths rather than hand-written agent loops.
+LangGraph keeps an inspectable graph topology, but its retrieval stage is
+dynamic: it discovers the server's current tool schemas, binds them to the
+model, and uses a bounded `select_tools -> tools` loop before waiting for every
+specialist branch. Agno uses its native coordinate `Team`: a leader selects
+agents, delegates work, and synthesizes their responses dynamically. Both are
+real framework execution paths rather than hand-written agent loops.
 
 ## Quick start with Docker Compose
 
 Prerequisites:
 
 - Docker with the Compose plugin
-- An OpenAI-compatible chat model; the Agno backend additionally requires
-  reliable tool/function calling for delegation and MCP use
+- An OpenAI-compatible chat model with reliable tool/function calling
 
 Create the runtime environment file:
 
@@ -144,10 +146,54 @@ The retrieval server exposes tools for:
 - restaurant review lookup;
 - corpus statistics and service health.
 
+Both orchestration backends discover these definitions from the MCP server.
+LangGraph uses `MultiServerMCPClient.get_tools()` to convert the exposed MCP
+schemas into LangChain tools, binds the complete discovered set to its chat
+model, and delegates execution to LangGraph's `ToolNode`. The model chooses a
+minimal relevant subset for each request and can make follow-up calls using
+identifiers returned by an earlier tool. `LANGGRAPH_MAX_TOOL_ROUNDS` bounds
+that loop.
+
+The discovered tools are cached for the lifetime of the LangGraph backend.
+After adding or changing an MCP tool, restart the MCP and API services so the
+API loads the new schema. See [CONTRIBUTING.md](CONTRIBUTING.md#adding-an-mcp-tool)
+for the implementation and test checklist.
+
 `RETRIEVAL_MODE=semantic` uses a persistent Chroma index. A deterministic
 lexical mode is available for tests and constrained environments. The first
 semantic startup downloads Chroma's default local embedding model; Compose
 persists both that model cache and the vector index in named volumes.
+
+## Development container
+
+The repository includes a complete VS Code-compatible development container.
+It attaches the editor to a non-root Python 3.12 container and starts the MCP,
+reload-enabled FastAPI, and Gradio services as Compose sidecars.
+
+1. Create `.env` from `.env.example` and configure the model.
+2. Stop the normal Compose stack if it is running because both environments
+   publish ports 7860, 8000, and 8001:
+
+   ```powershell
+   docker compose down
+   ```
+
+3. In VS Code with the Dev Containers extension, run **Dev Containers: Reopen
+   in Container**.
+
+The container installs the project with development dependencies and mounts
+the working tree at `/workspaces/agentic-restaurant-rag`. Run validation from
+the attached terminal:
+
+```powershell
+pytest -q
+ruff check .
+mypy
+```
+
+Python changes in `src` reload the API automatically. Restart the `mcp` or
+`web` sidecar after changing their process code. Rebuild the development
+container after changing `pyproject.toml` or `.devcontainer/Dockerfile`.
 
 ## Local development
 
@@ -207,6 +253,7 @@ docker run --rm agentic-restaurant-rag:test
 | `CHROMA_PATH` | Persistent vector-index directory |
 | `RETRIEVAL_MODE` | `semantic` or `lexical` |
 | `RETRIEVAL_TOP_K` | Default number of retrieved candidates |
+| `LANGGRAPH_MAX_TOOL_ROUNDS` | Maximum MCP selection/execution rounds per LangGraph request (1–10) |
 | `API_BASE_URL` | API address used by the Gradio service |
 | `REQUEST_TIMEOUT_SECONDS` | Timeout for each model or MCP operation |
 | `CLIENT_TIMEOUT_SECONDS` | End-to-end Gradio-to-API request timeout |
@@ -237,4 +284,5 @@ API gateway, store secrets in the deployment platform’s secret manager, restri
 the MCP service to the private network, and replace local Chroma persistence
 with a backed-up or managed vector store where appropriate.
 
-See [SECURITY.md](SECURITY.md) for the repository-specific security guidance.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and
+[SECURITY.md](SECURITY.md) for repository-specific security guidance.

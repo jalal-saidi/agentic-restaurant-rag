@@ -45,7 +45,6 @@ class BackendRegistry:
         return LangGraphOrchestrator(
             settings=self.settings,
             llm=OpenAICompatibleLLM(self.settings),
-            retrieval=FastMCPRetrievalGateway(self.settings),
         )
 
     def _make_agno(self) -> Orchestrator:

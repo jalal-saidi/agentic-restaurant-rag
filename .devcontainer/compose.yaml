@@ -1,23 +1,43 @@
+x-dev-service: &dev-service
+  build:
+    context: ..
+    dockerfile: .devcontainer/Dockerfile
+  image: agentic-restaurant-rag:dev
+  init: true
+  working_dir: /workspaces/agentic-restaurant-rag
+  volumes:
+    - ..:/workspaces/agentic-restaurant-rag:cached
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
 services:
-  mcp:
-    build:
-      context: .
-    command: ["python", "-m", "connoisseur.mcp.server"]
+  dev:
+    <<: *dev-service
+    command: ["sleep", "infinity"]
     env_file:
-      - .env
+      - ../.env
     environment:
-      DATA_ROOT: /app
-      CHROMA_PATH: /app/.data/chroma
-      RETRIEVAL_MODE: ${RETRIEVAL_MODE:-semantic}
+      API_BASE_URL: http://api:8000
+      MCP_SERVER_URL: http://mcp:8001/mcp
+      PYTHONPATH: /workspaces/agentic-restaurant-rag/src
+
+  mcp:
+    <<: *dev-service
+    command: ["python", "-m", "connoisseur.mcp.server"]
+    environment:
+      CHROMA_PATH: /home/vscode/.local/share/connoisseur/chroma
+      DATA_ROOT: /workspaces/agentic-restaurant-rag
       MCP_HOST: 0.0.0.0
       MCP_PORT: "8001"
-    init: true
-    restart: unless-stopped
+      PYTHONPATH: /workspaces/agentic-restaurant-rag/src
+      RETRIEVAL_MODE: ${RETRIEVAL_MODE:-semantic}
+      RETRIEVAL_TOP_K: ${RETRIEVAL_TOP_K:-5}
     ports:
-      - "${MCP_PUBLISHED_PORT:-8001}:8001"
+      - "127.0.0.1:8001:8001"
     volumes:
-      - chroma_data:/app/.data/chroma
-      - chroma_model_cache:/app/.cache/chroma
+      - ..:/workspaces/agentic-restaurant-rag:cached
+      - dev_chroma_data:/home/vscode/.local/share/connoisseur/chroma
+      - dev_chroma_model_cache:/home/vscode/.cache/chroma
     healthcheck:
       test:
         [
@@ -30,12 +50,9 @@ services:
       timeout: 8s
       retries: 12
       start_period: 60s
-    security_opt:
-      - no-new-privileges:true
 
   api:
-    build:
-      context: .
+    <<: *dev-service
     command:
       [
         "python",
@@ -46,22 +63,19 @@ services:
         "0.0.0.0",
         "--port",
         "8000",
+        "--reload",
+        "--reload-dir",
+        "src",
       ]
     env_file:
-      - .env
+      - ../.env
     environment:
-      LLM_MODEL: ${LLM_MODEL:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
-      MCP_SERVER_URL: http://mcp:8001/mcp
       API_HOST: 0.0.0.0
       API_PORT: "8000"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    init: true
-    restart: unless-stopped
+      MCP_SERVER_URL: http://mcp:8001/mcp
+      PYTHONPATH: /workspaces/agentic-restaurant-rag/src
     ports:
-      - "${API_PUBLISHED_PORT:-8000}:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       mcp:
         condition: service_healthy
@@ -77,23 +91,18 @@ services:
       timeout: 8s
       retries: 12
       start_period: 20s
-    security_opt:
-      - no-new-privileges:true
 
   web:
-    build:
-      context: .
+    <<: *dev-service
     command: ["python", "-m", "connoisseur.client.gradio_app"]
-    env_file:
-      - .env
     environment:
       API_BASE_URL: http://api:8000
+      CLIENT_TIMEOUT_SECONDS: ${CLIENT_TIMEOUT_SECONDS:-300}
       GRADIO_SERVER_NAME: 0.0.0.0
       GRADIO_SERVER_PORT: "7860"
-    init: true
-    restart: unless-stopped
+      PYTHONPATH: /workspaces/agentic-restaurant-rag/src
     ports:
-      - "${WEB_PUBLISHED_PORT:-7860}:7860"
+      - "127.0.0.1:7860:7860"
     depends_on:
       api:
         condition: service_healthy
@@ -109,9 +118,7 @@ services:
       timeout: 8s
       retries: 12
       start_period: 20s
-    security_opt:
-      - no-new-privileges:true
 
 volumes:
-  chroma_data:
-  chroma_model_cache:
+  dev_chroma_data:
+  dev_chroma_model_cache:

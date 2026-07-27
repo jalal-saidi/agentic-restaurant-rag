@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import unittest
-from collections.abc import Mapping
 from typing import Any
 
 from connoisseur.orchestrators.contracts import ChatInput, ChatMessage
@@ -27,20 +26,33 @@ class CapturingLLM(FakeLLM):
         return "Synthesized answer"
 
 
-class FakeRetrieval:
-    async def retrieve(
-        self,
-        *,
-        query: str,
-        profile: Mapping[str, Any],
-    ) -> Mapping[str, Any]:
-        return {}
+class FakeToolProvider:
+    def __init__(self, tools: list[Any] | None = None) -> None:
+        self.tools = tools or []
+        self.calls = 0
 
-    async def health(self) -> Mapping[str, Any]:
-        return {"status": "ok"}
+    async def get_tools(self) -> list[Any]:
+        self.calls += 1
+        return self.tools
 
     async def aclose(self) -> None:
         return None
+
+
+class FakeTool:
+    name = "scenario_search"
+
+
+class FakeToolModel:
+    async def ainvoke(self, messages: list[Any]) -> Any:
+        del messages
+        return object()
+
+
+class FakeToolNode:
+    def __init__(self, tools: Any, **kwargs: Any) -> None:
+        self.tools = tools
+        self.kwargs = kwargs
 
 
 class FakeCompiledGraph:
@@ -66,6 +78,7 @@ class RecordingStateGraph:
         self.state_schema = state_schema
         self.nodes: dict[str, Any] = {}
         self.edges: list[tuple[Any, Any]] = []
+        self.conditional_edges: list[tuple[str, Any, dict[str, str]]] = []
         self.compiled = FakeCompiledGraph()
         RecordingStateGraph.latest = self
 
@@ -74,6 +87,14 @@ class RecordingStateGraph:
 
     def add_edge(self, source: Any, target: Any) -> None:
         self.edges.append((source, target))
+
+    def add_conditional_edges(
+        self,
+        source: str,
+        condition: Any,
+        paths: dict[str, str],
+    ) -> None:
+        self.conditional_edges.append((source, condition, paths))
 
     def compile(self, **_: Any) -> FakeCompiledGraph:
         return self.compiled
@@ -84,24 +105,40 @@ class LangGraphTopologyTests(unittest.TestCase):
         LangGraphOrchestrator(
             settings=AppSettings(llm_model="model", openai_api_key="test-only"),
             llm=FakeLLM(),
-            retrieval=FakeRetrieval(),
+            tools=[FakeTool()],
+            tool_model=FakeToolModel(),
             state_graph_cls=RecordingStateGraph,
             start_node="START",
             end_node="END",
+            tool_node_cls=FakeToolNode,
+            tools_condition_fn=lambda _: "collect_evidence",
         )
         graph = RecordingStateGraph.latest
         assert graph is not None
 
         self.assertEqual(
             set(graph.nodes),
-            {"profile", "retrieve", "trend", "style", "nutrition", "synthesis"},
+            {
+                "profile",
+                "select_tools",
+                "tools",
+                "collect_evidence",
+                "trend",
+                "style",
+                "nutrition",
+                "synthesis",
+            },
         )
-        self.assertIn(("retrieve", "trend"), graph.edges)
-        self.assertIn(("retrieve", "style"), graph.edges)
-        self.assertIn(("retrieve", "nutrition"), graph.edges)
+        self.assertIn(("collect_evidence", "trend"), graph.edges)
+        self.assertIn(("collect_evidence", "style"), graph.edges)
+        self.assertIn(("collect_evidence", "nutrition"), graph.edges)
         self.assertIn(("trend", "synthesis"), graph.edges)
         self.assertIn(("style", "synthesis"), graph.edges)
         self.assertIn(("nutrition", "synthesis"), graph.edges)
+        self.assertEqual(
+            {source for source, _, _ in graph.conditional_edges},
+            {"select_tools", "tools"},
+        )
 
 
 class LangGraphRunTests(unittest.IsolatedAsyncioTestCase):
@@ -117,7 +154,6 @@ class LangGraphRunTests(unittest.IsolatedAsyncioTestCase):
         orchestrator = LangGraphOrchestrator(
             settings=AppSettings(llm_model="model", openai_api_key="test-only"),
             llm=FakeLLM(),
-            retrieval=FakeRetrieval(),
             graph=graph,
         )
 
@@ -146,7 +182,6 @@ class LangGraphRunTests(unittest.IsolatedAsyncioTestCase):
                 max_history_messages=0,
             ),
             llm=FakeLLM(),
-            retrieval=FakeRetrieval(),
             graph=graph,
         )
 
@@ -174,7 +209,6 @@ class LangGraphRunTests(unittest.IsolatedAsyncioTestCase):
                 max_context_chars=1_000,
             ),
             llm=llm,
-            retrieval=FakeRetrieval(),
             graph=FakeCompiledGraph(),
         )
 

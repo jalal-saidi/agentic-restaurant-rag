@@ -15,6 +15,7 @@ class AppSettingsTests(unittest.TestCase):
                 "MCP_SERVER_URL": "http://mcp:8001/mcp",
                 "API_BASE_URL": "http://api:8000/",
                 "RETRIEVAL_TOP_K": "7",
+                "LANGGRAPH_MAX_TOOL_ROUNDS": "4",
                 "LLM_MAX_TOKENS_PARAMETER": "max_tokens",
                 "LLM_REASONING_EFFORT": "none",
                 "CLIENT_TIMEOUT_SECONDS": "420",
@@ -26,6 +27,7 @@ class AppSettingsTests(unittest.TestCase):
         self.assertEqual(settings.mcp_server_url, "http://mcp:8001/mcp")
         self.assertEqual(settings.api_base_url, "http://api:8000")
         self.assertEqual(settings.retrieval_limit, 7)
+        self.assertEqual(settings.langgraph_max_tool_rounds, 4)
         self.assertEqual(settings.llm_max_tokens_parameter, "max_tokens")
         self.assertEqual(settings.llm_reasoning_effort, "none")
         self.assertEqual(settings.client_timeout_seconds, 420)
@@ -73,6 +75,10 @@ class AppSettingsTests(unittest.TestCase):
             AppSettings.from_env({"RETRIEVAL_TOP_K": "51"})
         with self.assertRaises(ValueError):
             AppSettings.from_env({"MAX_HISTORY_MESSAGES": "101"})
+        with self.assertRaises(ValueError):
+            AppSettings.from_env({"LANGGRAPH_MAX_TOOL_ROUNDS": "0"})
+        with self.assertRaises(ValueError):
+            AppSettings.from_env({"LANGGRAPH_MAX_TOOL_ROUNDS": "11"})
 
     def test_rejects_unknown_max_tokens_parameter(self) -> None:
         with self.assertRaises(ValueError):

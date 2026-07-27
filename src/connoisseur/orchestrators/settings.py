@@ -89,6 +89,7 @@ class AppSettings:
     mcp_server_url: str = "http://localhost:8001/mcp"
     api_base_url: str = "http://localhost:8000"
     retrieval_limit: int = 5
+    langgraph_max_tool_rounds: int = 3
     max_history_messages: int = 12
     max_context_chars: int = 24_000
     llm_max_tokens: int = 1_200
@@ -153,6 +154,13 @@ class AppSettings:
                 5,
                 minimum=1,
                 maximum=50,
+            ),
+            langgraph_max_tool_rounds=_integer(
+                values,
+                "LANGGRAPH_MAX_TOOL_ROUNDS",
+                3,
+                minimum=1,
+                maximum=10,
             ),
             max_history_messages=_integer(
                 values,

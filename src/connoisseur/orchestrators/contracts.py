@@ -92,6 +92,17 @@ class RetrievalGateway(Protocol):
 
 
 @runtime_checkable
+class ToolProvider(Protocol):
+    """Dynamically load model-callable tools from an MCP server."""
+
+    async def get_tools(self) -> Sequence[Any]:
+        """Return the currently exposed tool definitions."""
+
+    async def aclose(self) -> None:
+        """Release any discovery-client resources."""
+
+
+@runtime_checkable
 class Orchestrator(Protocol):
     """Common interface implemented by LangGraph and Agno."""
 
