@@ -10,6 +10,40 @@ MCP retrieval server, orchestration API, and web client into independently
 runnable services. It also replaces illustrative multi-agent patterns with
 genuine **LangGraph** and **Agno** orchestration implementations.
 
+## My contributions
+
+The IBM capstone provided the original learning exercises and project
+inspiration. My contribution was to re-architect and implement those materials
+as the cohesive application in this repository. Specifically, I:
+
+- designed the three-service architecture that separates the Gradio client,
+  FastAPI orchestration API, and FastMCP retrieval server behind typed
+  HTTP and MCP contracts;
+- implemented two interchangeable orchestration backends: an eight-node
+  LangGraph workflow and a five-member Agno coordinate team operating over the
+  same retrieval tools and API contract;
+- upgraded LangGraph from fixed retrieval calls to runtime MCP schema
+  discovery, model-directed tool selection, native `ToolNode` execution,
+  bounded follow-up rounds, and parallel specialist fan-out/fan-in;
+- built persistent Chroma semantic retrieval with structured metadata filters,
+  content-hash incremental indexing, stale-record cleanup, stable cross-corpus
+  identifiers, and deterministic TF-IDF fallback;
+- added session-aware conversation handling, bounded prompt context,
+  partial-retrieval-failure recovery, health and readiness endpoints, typed API
+  validation, and actionable error responses;
+- made model access configurable through OpenAI-compatible endpoints, including
+  provider-specific token and reasoning settings shared by LangGraph and Agno;
+- containerized the production and test workflows with non-root execution,
+  health-gated startup, persistent caches, and separate service lifecycles;
+- created a non-root VS Code Dev Container with editable installation,
+  reload-enabled services, persistent development volumes, and configured
+  Python quality tooling;
+- authored 43 offline automated tests across 13 test modules and configured
+  Pytest, Ruff, strict mypy checking, and the package's `py.typed` marker; and
+- documented the architecture, operation, extension workflow, security
+  boundaries, and the process for adding MCP tools that both orchestration
+  frameworks can discover.
+
 The application provides two real orchestration implementations over the same
 MCP retrieval service:
 
